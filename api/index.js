@@ -1,58 +1,52 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-console.log("Stage 1: Basic modules loaded.");
-
-// --- تحميل متغيرات البيئة أولاً ---
 dotenv.config();
-console.log("Stage 2: Environment variables configured.");
 
-// --- استيراد الوحدات الأخرى ---
 const connectDB = require('../config/db');
 const authRoutes = require('../routes/authRoutes');
-// ... (أضف بقية استيرادات المسارات هنا)
-console.log("Stage 3: All routes and DB config imported.");
+const userRoutes = require('../routes/userRoutes');
+const planRoutes = require('../routes/planRoutes');
+const swapRoutes = require('../routes/swapRoutes');
+const translateRoutes = require('../routes/translateRoutes');
+const subscriptionRoutes = require('../routes/subscriptionRoutes');
+const coachRoutes = require('../routes/coachRoutes');
+const uploadRoutes = require('../routes/uploadRoutes');
+const stripeController = require('../controllers/stripeController');
+const { protect } = require('../middleware/authMiddleware');
 
-
+connectDB();
 const app = express();
 app.use(cors());
-console.log("Stage 4: Express app created and CORS enabled.");
 
-// --- الاتصال بقاعدة البيانات ---
-// سنضع هذا داخل دالة async للتعامل مع الأخطاء بشكل أفضل
-const startServer = async () => {
-    try {
-        await connectDB();
-        console.log("Stage 5: MongoDB connected successfully.");
-    } catch (error) {
-        console.error("CRITICAL: Failed to connect to MongoDB.", error);
-        // في بيئة السيرفرلس، قد لا نوقف العملية، لكننا سنسجل الخطأ
-    }
-    
-    // --- Middlewares أخرى ---
-    app.use(express.json()); // تحليل JSON
-    console.log("Stage 6: JSON middleware enabled.");
-    
-    // --- تعريف المسارات ---
-    app.use('/auth', authRoutes);
-    // ... (أضف بقية app.use للمسارات هنا)
-    console.log("Stage 7: All routes have been defined.");
+// مسار Webhook يجب أن يأتي قبل express.json
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeController.handleWebhook);
 
-    // نقطة وصول أساسية للاختبار
-    app.get('/', (req, res) => {
-        console.log("Root API endpoint [/] was hit!");
-        res.send('Fitness Planner API is running...');
-    });
+app.use(express.json());
 
-    // Vercel لا يستخدم هذا، ولكننا نتركه
+// استخدام المسارات مع البادئة /api
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/plans', planRoutes);
+app.use('/api/swap', swapRoutes);
+app.use('/api/translate', translateRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/coach', coachRoutes);
+app.use('/api/upload', uploadRoutes);
+app.post('/api/stripe/create-checkout-session', protect, createCheckoutSession);
+
+
+// نقطة وصول أساسية للاختبار
+app.get('/api', (req, res) => {
+  res.send('Fitness Planner API is running successfully!');
+});
+
+// Vercel يتولى تشغيل الخادم، لذا لا نحتاج إلى app.listen في الإنتاج
+// ولكن من الجيد إبقاؤه لبيئة التطوير المحلية
+if (process.env.NODE_ENV === 'development') {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`(This log is for local development only) Server running on port ${PORT}`);
-    });
-};
-
-// بدء تشغيل الخادم
-startServer();
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
 
 // تصدير التطبيق لـ Vercel
 module.exports = app;
