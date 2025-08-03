@@ -12,14 +12,18 @@ const translateRoutes = require('../routes/translateRoutes');
 const subscriptionRoutes = require('../routes/subscriptionRoutes');
 const coachRoutes = require('../routes/coachRoutes');
 const uploadRoutes = require('../routes/uploadRoutes');
+
+// --- الإصلاح الرئيسي هنا: استيراد stripeController بالكامل ---
 const stripeController = require('../controllers/stripeController');
+// --------------------------------------------------------
+
 const { protect } = require('../middleware/authMiddleware');
 
 connectDB();
 const app = express();
 app.use(cors());
 
-// مسار Webhook يجب أن يأتي قبل express.json
+// مسار Webhook يستخدم الدالة مباشرة من الكائن المستورد
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeController.handleWebhook);
 
 app.use(express.json());
@@ -33,7 +37,9 @@ app.use('/api/translate', translateRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/coach', coachRoutes);
 app.use('/api/upload', uploadRoutes);
-app.post('/api/stripe/create-checkout-session', protect, createCheckoutSession);
+
+// مسار Stripe الآخر يستخدم الدالة مباشرة من الكائن المستورد
+app.post('/api/stripe/create-checkout-session', protect, stripeController.createCheckoutSession);
 
 
 // نقطة وصول أساسية للاختبار
@@ -41,8 +47,7 @@ app.get('/api', (req, res) => {
   res.send('Fitness Planner API is running successfully!');
 });
 
-// Vercel يتولى تشغيل الخادم، لذا لا نحتاج إلى app.listen في الإنتاج
-// ولكن من الجيد إبقاؤه لبيئة التطوير المحلية
+// Vercel يتولى تشغيل الخادم
 if (process.env.NODE_ENV === 'development') {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
