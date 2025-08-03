@@ -3,9 +3,9 @@ const router = express.Router();
 const { createCheckoutSession } = require('../controllers/stripeController');
 const { protect } = require('../middleware/authMiddleware');
 
-// الآن هذا الملف يحتوي فقط على المسار المحمي
+// لم نعد بحاجة لـ /api أو /stripe هنا، لأنها معرفة في المجمع
 router.post('/create-checkout-session', protect, createCheckoutSession);
 
-// لم نعد بحاجة لمسار الـ webhook هنا
+// لا يوجد مسار webhook هنا بعد الآن
 
 module.exports = router;

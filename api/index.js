@@ -4,31 +4,32 @@ const cors = require('cors');
 dotenv.config();
 
 const connectDB = require('../config/db');
-const authRoutes = require('../routes/authRoutes');
-const userRoutes = require('../routes/userRoutes');
-// ... (بقية استيرادات المسارات)
+const allRoutes = require('../routes/index'); // <-- استيراد المجمع
 const stripeController = require('../controllers/stripeController');
-const { protect } = require('../middleware/authMiddleware');
 
 connectDB();
 const app = express();
 app.use(cors());
 
-// --- مسار Webhook (يبقى كما هو مع /api لأنه مسار خاص) ---
+// مسار Webhook يبقى منفصلاً لأنه يحتاج لمعالجة خاصة
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeController.handleWebhook);
 
 app.use(express.json());
 
-// --- استخدام المسارات بدون بادئة /api ---
-app.use('/auth', authRoutes);
-app.use('/users', userRoutes);
-app.use('/plans', planRoutes);
-// ... (بقية المسارات بدون /api)
-app.post('/stripe/create-checkout-session', protect, stripeController.createCheckoutSession);
+// --- استخدام مجمع المسارات ---
+// كل المسارات (auth, users, plans, etc.) معرفة الآن تحت /api
+app.use('/api', allRoutes);
 
-// --- نقطة الاختبار الآن في الجذر ---
-app.get('/', (req, res) => {
-  res.send('Fitness Planner API root is running!');
+// نقطة وصول أساسية للاختبار
+app.get('/api', (req, res) => {
+    res.send('Fitness Planner API root is running!');
 });
 
+// Vercel يتولى تشغيل الخادم
+if (process.env.NODE_ENV === 'development') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
+
+// تصدير التطبيق لـ Vercel
 module.exports = app;
