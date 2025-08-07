@@ -22,9 +22,15 @@ const uploadRoutes = require('./routes/uploadRoutes');
 connectDB();
 
 const app = express();
+// --- الخطوة 1: تطبيق CORS بإعدادات محددة ---
+const corsOptions = {
+  origin: 'https://fit-pro-front.vercel.app', // السماح فقط للواجهة الأمامية بالوصول
+  credentials: true, // السماح بإرسال بيانات الاعتماد (مثل الكوكيز والـ headers الخاصة بالـ Authorization)
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  optionsSuccessStatus: 204 // بعض المتصفحات القديمة (IE11, various SmartTVs) تواجه مشكلة مع 204
+};
 
-// --- الخطوة 1: تطبيق CORS أولاً وقبل كل شيء ---
-app.use(cors());
+app.use(cors(corsOptions));
 
 // --- الخطوة 2: التعامل مع مسار الـ Webhook بشكل خاص ومنفصل ---
 app.post(
