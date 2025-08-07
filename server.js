@@ -24,7 +24,7 @@ connectDB();
 const app = express();
 // --- الخطوة 1: تطبيق CORS بإعدادات محددة ---
 const corsOptions = {
-  origin: 'https://fit-pro-front.vercel.app', // السماح فقط للواجهة الأمامية بالوصول
+  origin: 'https://fit-pro-front.vercel.app' || 'http://localhost:8080', // السماح فقط للواجهة الأمامية بالوصول
   credentials: true, // السماح بإرسال بيانات الاعتماد (مثل الكوكيز والـ headers الخاصة بالـ Authorization)
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   optionsSuccessStatus: 204 // بعض المتصفحات القديمة (IE11, various SmartTVs) تواجه مشكلة مع 204
